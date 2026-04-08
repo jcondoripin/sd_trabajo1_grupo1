@@ -1,10 +1,12 @@
 import os
 import uuid
 from PIL import Image, UnidentifiedImageError
-from flask import Flask, render_template, request, send_from_directory, jsonify
+from flask import Flask, redirect, render_template, request, send_from_directory, jsonify, url_for
+from flask_login import LoginManager, UserMixin, login_user, current_user, login_required, logout_user
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.secret_key = 'llave-ultra-secreta-xdxd' # simula una sk de prueba
 
 # ==================== CONFIGURACIÓN ====================
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024      # 5 MB (recomendado para imágenes)
@@ -15,6 +17,29 @@ app.config['MAX_FILE_SIZE'] = 5 * 1024 * 1024           # Límite por archivo (e
 # Crear carpeta de uploads si no existe
 os.makedirs(app.config['UPLOAD_PATH'], exist_ok=True)
 
+# Fake login para pruebas
+login_manager = LoginManager(app)
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+    def get_id(self):
+        return super().get_id()
+    
+@login_manager.user_loader
+def load_user(user_id):
+    return User(user_id)
+
+@app.route('/login/<int:user_id>')
+def login_test(user_id):
+    # simula el login de un usuario
+    user = User(user_id)
+    login_user(user)
+    return redirect(url_for('index'))
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 def allowed_image_extension(filename: str) -> bool:
     """Valida la extensión del archivo."""
@@ -45,8 +70,11 @@ def too_large(e):
 # ==================== RUTAS ====================
 @app.route('/')
 def index():
-    files = os.listdir(app.config['UPLOAD_PATH'])
-    # Mostrar solo imágenes válidas (opcional)
+    files = []
+    if current_user.is_authenticated:
+        user_dir = os.path.join(app.config['UPLOAD_PATH'], current_user.get_id())
+        if os.path.exists(user_dir):
+            files = os.listdir(user_dir)
     return render_template('index.html', files=files)
 
 
@@ -60,6 +88,11 @@ def upload_files():
 
     if filename == '':
         return jsonify({"error": "Nombre de archivo vacío"}), 400
+    else:
+        # sube archivos solo a una carpeta privada
+        user_dir = os.path.join(app.config['UPLOAD_PATH'], current_user.get_id())
+        os.makedirs(user_dir, exist_ok=True) # crea carpeta si no existe
+        file_ext = os.path.splitext(filename)[1]
 
     # 1. Validar extensión
     if not allowed_image_extension(filename):
@@ -95,8 +128,10 @@ def upload_files():
 
 
 @app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_PATH'], filename)
+@login_required
+def upload(filename):
+    return send_from_directory(os.path.join(
+        app.config['UPLOAD_PATH'], current_user.get_id()), filename)
 
 
 if __name__ == '__main__':
