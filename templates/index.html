@@ -25,7 +25,7 @@
     <hr>
     <h2>Imágenes subidas:</h2>
     {% for file in files %}
-        <img src="{{ url_for('uploaded_file', filename=file) }}" style="max-width: 120px; margin: 5px;" alt="{{ file }}">
+        <img src="{{ url_for('upload', filename=file) }}" style="max-width: 120px; margin: 5px;" alt="{{ file }}">
     {% endfor %}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>

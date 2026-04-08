@@ -84,15 +84,10 @@ def upload_files():
         return jsonify({"error": "No se envió ningún archivo"}), 400
 
     uploaded_file = request.files['file']
-    filename = uploaded_file.filename
+    filename = secure_filename(uploaded_file.filename)
 
     if filename == '':
         return jsonify({"error": "Nombre de archivo vacío"}), 400
-    else:
-        # sube archivos solo a una carpeta privada
-        user_dir = os.path.join(app.config['UPLOAD_PATH'], current_user.get_id())
-        os.makedirs(user_dir, exist_ok=True) # crea carpeta si no existe
-        file_ext = os.path.splitext(filename)[1]
 
     # 1. Validar extensión
     if not allowed_image_extension(filename):
@@ -107,13 +102,15 @@ def upload_files():
         return jsonify({"error": "El archivo no es una imagen válida."}), 400
 
     # 4. Generar nombre seguro + único (evita sobrescrituras y ataques)
-    secure_name = secure_filename(filename)
-    unique_name = f"{uuid.uuid4().hex}_{secure_name}"
-    save_path = os.path.join(app.config['UPLOAD_PATH'], unique_name)
+    # secure_name = secure_filename(filename)
+    # unique_name = f"{uuid.uuid4().hex}_{secure_name}"
+    # save_path = os.path.join(app.config['UPLOAD_PATH'], unique_name)
+    user_dir = os.path.join(app.config['UPLOAD_PATH'], current_user.get_id())
+    os.makedirs(user_dir, exist_ok=True) # crea carpeta si no existe
 
     # 5. Guardar de forma eficiente (streaming)
     try:
-        uploaded_file.save(save_path)
+        uploaded_file.save(os.path.join(user_dir, filename))
         # Alternativa más controlada con streaming (útil para archivos grandes):
         # with open(save_path, 'wb') as f:
         #     while chunk := uploaded_file.stream.read(8192):
@@ -123,7 +120,7 @@ def upload_files():
 
     return jsonify({
         "message": "Archivo subido correctamente",
-        "filename": unique_name
+        "filename": filename
     }), 201
 
 
