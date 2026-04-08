@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'llave-ultra-secreta-xdxd' # simula una sk de prueba
 
 # Configuración
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024  # 2MB (modificado para pruebas)
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 2MB (modificado para pruebas)
 app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
 app.config['UPLOAD_PATH'] = 'uploads'
 
