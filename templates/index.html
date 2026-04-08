@@ -6,6 +6,16 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.css">
 </head>
 <body>
+    <div style="background: #eee; padding: 10px; margin-bottom: 20px;">
+        {% if current_user.is_authenticated %}
+            <strong>Sesión activa: Usuario {{ current_user.id }}</strong> | 
+            <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+        {% else %}
+            <strong>No logueado:</strong> 
+            <a href="/login/1">Entrar como User 1</a> | 
+            <a href="/login/2">Entrar como User 2</a>
+        {% endif %}
+    </div>
     <h1>File Upload</h1>
 
     <form action="{{ url_for('upload_files') }}" class="dropzone"></form>
